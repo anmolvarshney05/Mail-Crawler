@@ -1,0 +1,26 @@
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'application'
+
+
+repositories {
+    mavenCentral()
+}
+
+mainClassName = 'Crawler'
+
+run {
+    if (System.getProperty("exec.args") != null) {
+        args System.getProperty("exec.args").split()
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'Crawler'
+    }
+}
+
+dependencies {
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+}

@@ -21,7 +21,6 @@ public class Crawler {
     private Vector<URL> newURLs; // New URL's
     private String saveRegex = ""; // Regex for the URL's whose content is desired
     private URL url; // Starting URL
-    private int mailCount;
     private File baseDir;
 
     // Initialzing all the Data Structures and Variables
@@ -29,9 +28,8 @@ public class Crawler {
         blockedIP = new Vector<String>();
         seenURL = new Hashtable<URL, Integer>();
         newURLs = new Vector<URL>();
-        mailCount = 0;
         String home = System.getProperty("user.home");
-        baseDir = new File(FilenameUtils.normalize(home + File.separator + "/Desktop/Mails"));
+        baseDir = new File(FilenameUtils.normalize(home + File.separator + "Desktop" + File.separator + "Mails"));
         baseDir.mkdir();
         //seenURLHash = new Hashtable<String, Integer>();
         try {
@@ -132,11 +130,32 @@ public class Crawler {
             if(robotSafe(url.toString())){
                 if(!(seenURL.containsKey(url))) {
                     if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
-                        System.out.println("Matched " + url.toString());
-                        File file = new File(baseDir.toString() + File.separator + "Mail " + Integer.toString(mailCount) + ".txt");
-                        FileUtils.writeStringToFile(file, getPage(url), "UTF-8", true);
-                        mailCount += 1;
-                        System.out.println("Saved " + url.toString());
+                        String pageContent = getPage(url);
+                        int messageLink = pageContent.indexOf("<a rel=\"nofollow\" href=\"");
+                        int start = messageLink + "<a rel=\"nofollow\" href=\"".length();
+                        int end = pageContent.indexOf("\"", start);
+                        String messageURL = pageContent.substring(start, end);
+                        URI uriTemp = url.toURI();
+                        URI uriResTemp = uriTemp.resolve(messageURL);
+                        URL urlTemp = uriResTemp.toURL();
+                        int year = Integer.parseInt(url.toString().substring(url.toString().indexOf(".mbox") - 6, url.toString().indexOf(".mbox") - 2));
+                        int month = Integer.parseInt(url.toString().substring(url.toString().indexOf(".mbox") - 2, url.toString().indexOf(".mbox")));
+                        String fromMarker = "<td class=\"left\">From</td>\n    <td class=\"right\">";
+                        String author = pageContent.substring(pageContent.indexOf(fromMarker) + fromMarker.length(), pageContent.indexOf("&lt", pageContent.indexOf(fromMarker) + fromMarker.length()) - 1);
+                        author = author.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", "\"").replaceAll("&apos;", "'");
+                        if(!(Character.isLetter(author.charAt(0))))
+                            author = author.substring(1, author.length() - 1);
+                        String dateMarker = "<td class=\"left\">Date</td>\n    <td class=\"right\">";
+                        String dateStamp = pageContent.substring(pageContent.indexOf(dateMarker) + dateMarker.length(), pageContent.indexOf("</td>", pageContent.indexOf(dateMarker) + dateMarker.length()));
+                        dateStamp = dateStamp.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", "\"").replaceAll("&apos;", "'");
+                        if(!(Character.isLetter(dateStamp.charAt(0))))
+                            dateStamp = dateStamp.substring(1, dateStamp.length() - 1);
+                        dateStamp = dateStamp.substring(dateStamp.indexOf("GMT") - 9, dateStamp.indexOf("GMT") + 3);
+                        dateStamp.replaceAll(":", "-");
+                        pageContent = getPage(urlTemp);
+                        File file = new File(baseDir.toString() + File.separator + String.valueOf(year) + File.separator + String.valueOf(month) + File.separator + author + File.separator + author + " " + dateStamp + ".txt");
+                        FileUtils.writeStringToFile(file, pageContent, "UTF-8", true);
+                        System.out.println("Saved Mail in " + file.toString());
                     }
                     else if (url.toString().matches(this.url.toString() + "[0-9]{6}.mbox/date.*$")) {
                         newURLs.add(url);
@@ -203,6 +222,10 @@ public class Crawler {
 
     public static void main(String args[]) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         Crawler crawler = new Crawler();
-        crawler.run("http://mail-archives.apache.org/mod_mbox/maven-users/");
+        if(args.length != 0) {
+            crawler.run(args[0]);
+        }
+        else
+            crawler.run("http://mail-archives.apache.org/mod_mbox/maven-users/");
     }
 }

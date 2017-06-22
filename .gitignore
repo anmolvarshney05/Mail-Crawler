@@ -1,17 +1,23 @@
+# Mac OS
 .DS_Store
+
+# IDEA
 out/
 *.class
 .idea/
 *.iml
 *.iws
 *.ipr
-commons-io-2.5/
+
+# Gradle
 gradle-app.setting
 !gradle-wrapper.jar
+!gradle-wrapper.properties
 .gradletasknamecache
 .gradle
 build/
-bin/
+
+# Packages
 *.jar
 *.war
 *.ear
