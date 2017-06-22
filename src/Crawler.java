@@ -12,8 +12,6 @@ import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.Vector;
-//import java.math.BigInteger;
-//import java.security.MessageDigest;
 
 public class Crawler {
     private final String DISALLOW = "DISALLOW"; // Disallowed Pattern in Robots.txt
@@ -25,22 +23,6 @@ public class Crawler {
     private URL url; // Starting URL
     private int mailCount;
     private File baseDir;
-    //private Hashtable<String, Integer> seenURLHash; // For Storing Hash of Web Pages
-
-//    // Computes Hash of a Webpage
-//    private String MD5Hash(byte[] dataBytes) throws NoSuchAlgorithmException { // Computes Hash for Web Pages
-//        if(dataBytes == null){
-//            return "";
-//        }
-//        MessageDigest md = MessageDigest.getInstance("MD5");
-//        md.update(dataBytes);
-//        byte[] digest = md.digest();
-//        BigInteger bi = new BigInteger(digest);
-//        String ret = bi.toString(16);
-//        if(ret.length() %2 != 0)
-//            ret = "0" + ret;
-//        return ret;
-//    }
 
     // Initialzing all the Data Structures and Variables
     private void initialize(String URL){
@@ -57,11 +39,6 @@ public class Crawler {
             saveRegex = url.toString() + "[0-9]{6}.mbox/<.*>$";
             seenURL.put(url, new Integer(1));
             newURLs.add(url);
-//            try {
-//                seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8")), new Integer(1));
-//            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-//                return;
-//            }
         } catch (MalformedURLException e) {
             System.out.println("Invalid starting URL");
             return;
@@ -154,19 +131,16 @@ public class Crawler {
             URL url = uriRes.toURL();
             if(robotSafe(url.toString())){
                 if(!(seenURL.containsKey(url))) {
-//                    if(!(seenURLHash.containsKey(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))))) {
-                        if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
-                            System.out.println("Matched " + url.toString());
-                            File file = new File(baseDir.toString() + File.separator + "Mail " + Integer.toString(mailCount) + ".txt");
-                            FileUtils.writeStringToFile(file, getPage(url), "UTF-8", true);
-                            mailCount += 1;
-                            System.out.println("Saved " + url.toString());
-                        }
-                        else if (url.toString().matches(this.url.toString() + "[0-9]{6}.mbox/date.*$")) {
-                            newURLs.add(url);
-                        }
-//                        seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))), new Integer(1));
-//                    }
+                    if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
+                        System.out.println("Matched " + url.toString());
+                        File file = new File(baseDir.toString() + File.separator + "Mail " + Integer.toString(mailCount) + ".txt");
+                        FileUtils.writeStringToFile(file, getPage(url), "UTF-8", true);
+                        mailCount += 1;
+                        System.out.println("Saved " + url.toString());
+                    }
+                    else if (url.toString().matches(this.url.toString() + "[0-9]{6}.mbox/date.*$")) {
+                        newURLs.add(url);
+                    }
                     seenURL.put(url, new Integer(1));
                 }
             }
@@ -220,7 +194,6 @@ public class Crawler {
         while(true) {
             URL url = newURLs.elementAt(0);
             newURLs.removeElementAt(0);
-            //System.out.println(url.toString());
             if (robotSafe(url.toString()))
                 processPage(url);
             if (newURLs.isEmpty())
