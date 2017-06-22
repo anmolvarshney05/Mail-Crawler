@@ -2,7 +2,10 @@
  * Created by anmolvarshney on 20/06/17.
  */
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
+import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
@@ -20,6 +23,8 @@ public class Crawler {
     private Vector<URL> newURLs; // New URL's
     private String saveRegex = ""; // Regex for the URL's whose content is desired
     private URL url; // Starting URL
+    private int mailCount;
+    private File baseDir;
     //private Hashtable<String, Integer> seenURLHash; // For Storing Hash of Web Pages
 
 //    // Computes Hash of a Webpage
@@ -42,6 +47,10 @@ public class Crawler {
         blockedIP = new Vector<String>();
         seenURL = new Hashtable<URL, Integer>();
         newURLs = new Vector<URL>();
+        mailCount = 0;
+        String home = System.getProperty("user.home");
+        baseDir = new File(FilenameUtils.normalize(home + File.separator + "/Desktop/Mails"));
+        baseDir.mkdir();
         //seenURLHash = new Hashtable<String, Integer>();
         try {
             url = new URL(URL);
@@ -145,23 +154,25 @@ public class Crawler {
             URL url = uriRes.toURL();
             if(robotSafe(url.toString())){
                 if(!(seenURL.containsKey(url))) {
-                    //if(!(seenURLHash.containsKey(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))))) {
-                    if (url.toString().contains(this.url.toString())) {
+//                    if(!(seenURLHash.containsKey(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))))) {
                         if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
                             System.out.println("Matched " + url.toString());
+                            File file = new File(baseDir.toString() + File.separator + "Mail " + Integer.toString(mailCount) + ".txt");
+                            FileUtils.writeStringToFile(file, getPage(url), "UTF-8", true);
+                            mailCount += 1;
+                            System.out.println("Saved " + url.toString());
                         }
-                        else {
+                        else if (url.toString().matches(this.url.toString() + "[0-9]{6}.mbox/date.*$")) {
                             newURLs.add(url);
                         }
-                    }
-                    //seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))), new Integer(1));
-                    //}
+//                        seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))), new Integer(1));
+//                    }
                     seenURL.put(url, new Integer(1));
                 }
             }
             else
                 System.out.println("Blocked by Robot");
-        } catch (URISyntaxException | MalformedURLException e) {
+        } catch (java.io.IOException | URISyntaxException e) {
             return;
         }
     }
@@ -209,6 +220,7 @@ public class Crawler {
         while(true) {
             URL url = newURLs.elementAt(0);
             newURLs.removeElementAt(0);
+            //System.out.println(url.toString());
             if (robotSafe(url.toString()))
                 processPage(url);
             if (newURLs.isEmpty())
