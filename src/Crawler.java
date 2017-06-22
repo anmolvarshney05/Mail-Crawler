@@ -4,32 +4,62 @@
 
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.Vector;
+//import java.math.BigInteger;
+//import java.security.MessageDigest;
 
 public class Crawler {
-    private final String DISALLOW = "DISALLOW";
-    private final char ESCAPES[] = { '$', '^', '[', ']', '(', ')', '{', '|', '+', '\\', '.', '<', '>' };
-    private Vector<String> blockedIP;
-    private Hashtable<URL, Integer> seenURL;
-    private Vector<URL> newURLs;
-    private URL url;
+    private final String DISALLOW = "DISALLOW"; // Disallowed Pattern in Robots.txt
+    private final char ESCAPES[] = { '$', '^', '[', ']', '(', ')', '{', '|', '+', '\\', '.', '<', '>' }; // WildCard Escape Characters
+    private Vector<String> blockedIP; // Blocked IP's by Robots.txt
+    private Hashtable<URL, Integer> seenURL; // URL's already visited
+    private Vector<URL> newURLs; // New URL's
+    private String saveRegex = ""; // Regex for the URL's whose content is desired
+    private URL url; // Starting URL
+    //private Hashtable<String, Integer> seenURLHash; // For Storing Hash of Web Pages
 
+//    // Computes Hash of a Webpage
+//    private String MD5Hash(byte[] dataBytes) throws NoSuchAlgorithmException { // Computes Hash for Web Pages
+//        if(dataBytes == null){
+//            return "";
+//        }
+//        MessageDigest md = MessageDigest.getInstance("MD5");
+//        md.update(dataBytes);
+//        byte[] digest = md.digest();
+//        BigInteger bi = new BigInteger(digest);
+//        String ret = bi.toString(16);
+//        if(ret.length() %2 != 0)
+//            ret = "0" + ret;
+//        return ret;
+//    }
+
+    // Initialzing all the Data Structures and Variables
     private void initialize(String URL){
         blockedIP = new Vector<String>();
         seenURL = new Hashtable<URL, Integer>();
         newURLs = new Vector<URL>();
+        //seenURLHash = new Hashtable<String, Integer>();
         try {
             url = new URL(URL);
+            saveRegex = url.toString() + "[0-9]{6}.mbox/<.*>$";
             seenURL.put(url, new Integer(1));
             newURLs.add(url);
+//            try {
+//                seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8")), new Integer(1));
+//            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+//                return;
+//            }
         } catch (MalformedURLException e) {
             System.out.println("Invalid starting URL");
             return;
         }
     }
 
+    // Convert WildCards to Regex Expressions
     private String wildcardToReg(String pattern) {
         String result = "^";
         for (int i = 0; i < pattern.length(); i++) {
@@ -56,15 +86,17 @@ public class Crawler {
         return result;
     }
 
+    // Get Robots.txt of a URL
     private String getRobot() {
         String baseURL = url.getProtocol() + "://" + url.getHost();
         try (InputStream in = new URL(baseURL + "/robots.txt").openStream()) {
-                return IOUtils.toString(in, "UTF-8");
+            return IOUtils.toString(in, "UTF-8");
         } catch (Exception e) {
-                return "No Robots.txt File";
+            return "No Robots.txt File";
         }
     }
 
+    // Store all the Disallowed URL's by Robots.txt
     private void fillRobots(){
         String ret = getRobot();
         if(ret.equals("No Robots.txt File")){
@@ -80,6 +112,7 @@ public class Crawler {
         }
     }
 
+    // Check to see if URL is not disallowed in Robots.txt
     private boolean robotSafe(String link){
         boolean ret = true;
         for(String IP: blockedIP){
@@ -91,6 +124,7 @@ public class Crawler {
         return ret;
     }
 
+    // Get URL Page Contents
     private String getPage(URL url){
         try (InputStream in = new URL(url.toString()).openStream()) {
             return IOUtils.toString(in, "UTF-8");
@@ -100,16 +134,29 @@ public class Crawler {
         }
     }
 
-    private void addNewURL(URL oldURL, String newURL){
+    // Add New URL to the Queue
+    // Check to see if the URL is already Visited
+    // Display the desired URL's
+    // Option to avoid visiting the pages with same hash
+    private void addNewURL(URL oldURL, String newURL) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         try {
             URI uri = oldURL.toURI();
-            URI uriRes = uri.resolve(newURL);
+            URI uriRes = uri.resolve(newURL.replaceAll("\"", ""));
             URL url = uriRes.toURL();
             if(robotSafe(url.toString())){
                 if(!(seenURL.containsKey(url))) {
-                    System.out.println("URL Discovered " + url.toString());
+                    //if(!(seenURLHash.containsKey(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))))) {
+                    if (url.toString().contains(this.url.toString())) {
+                        if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
+                            System.out.println("Matched " + url.toString());
+                        }
+                        else {
+                            newURLs.add(url);
+                        }
+                    }
+                    //seenURLHash.put(MD5Hash((getPage(url).toLowerCase()).getBytes("UTF-8"))), new Integer(1));
+                    //}
                     seenURL.put(url, new Integer(1));
-                    newURLs.add(url);
                 }
             }
             else
@@ -119,7 +166,8 @@ public class Crawler {
         }
     }
 
-    public void processPage(URL url) {
+    // Extract all URL's from the page
+    public void processPage(URL url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         String page = getPage(url);
         String lcPage = page.toLowerCase();
         if(lcPage != "") {
@@ -154,7 +202,8 @@ public class Crawler {
         }
     }
 
-    public void run(String URL){
+    // Main Function to run everything
+    public void run(String URL) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         initialize(URL);
         fillRobots();
         while(true) {
@@ -167,7 +216,7 @@ public class Crawler {
         }
     }
 
-    public static void main(String args[]){
+    public static void main(String args[]) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         Crawler crawler = new Crawler();
         crawler.run("http://mail-archives.apache.org/mod_mbox/maven-users/");
     }
