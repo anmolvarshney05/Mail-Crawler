@@ -1,7 +1,3 @@
-/**
- * Created by anmolvarshney on 23/06/17.
- */
-
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 import java.net.MalformedURLException;

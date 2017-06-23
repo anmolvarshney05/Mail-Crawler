@@ -7,7 +7,7 @@ repositories {
     mavenCentral()
 }
 
-mainClassName = 'Crawler'
+mainClassName = 'UserInterface'
 
 run {
     if (System.getProperty("exec.args") != null) {
@@ -17,7 +17,7 @@ run {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'Crawler'
+        attributes 'Main-Class': 'UserInterface'
     }
 }
 

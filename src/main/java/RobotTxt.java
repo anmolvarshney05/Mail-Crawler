@@ -1,7 +1,3 @@
-/**
- * Created by anmolvarshney on 23/06/17.
- */
-
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 import java.net.URL;
@@ -11,7 +7,7 @@ public class RobotTxt {
     private final String DISALLOW; // Disallowed Pattern in Robots.txt
     private final char[] ESCAPES; // WildCard Escape Characters
     private Vector<String> blockedIP; // Blocked IP's by Robots.txt
-    URL url;
+    private URL url;
 
     // Constructor
     public RobotTxt(URL url){

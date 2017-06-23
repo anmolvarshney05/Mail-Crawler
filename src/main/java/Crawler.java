@@ -1,7 +1,3 @@
-/**
- * Created by anmolvarshney on 20/06/17.
- */
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.FileUtils;
 import java.io.File;
@@ -20,22 +16,25 @@ public class Crawler {
     private Vector<URL> newURLs; // New URL's
     private String saveRegex; // Regex for the URL's whose content is desired
     private String addRegex; // Regex for URL's to be added to Queue
-    private String home; // Home Directory
     private URL url; // Starting URL
     private File baseDir; // Base Directory for saving Mails
     private RobotTxt robot; // For Robots.txt
     private MailInformation mailInformation; // Mail Information
     private UrlOperations urlOperations; // URL Functions
-    File file; // Mail(s) and Attachment(s) File(s)
+    private File file; // Mail(s) and Attachment(s) File(s)
 
     // Initialising all the Data Structures and Variables
-    public Crawler(String URL){
+    public Crawler(String URL, String directory){
+        if(URL.equals(""))
+            URL = "http://mail-archives.apache.org/mod_mbox/maven-users/";
+        if(directory.equals("")){
+            directory = FilenameUtils.normalize(System.getProperty("user.home") + File.separator + "Desktop");
+        }
         seenURL = new Hashtable<URL, Integer>();
         newURLs = new Vector<URL>();
-        home = System.getProperty("user.home");
         mailInformation = new MailInformation();
         urlOperations = new UrlOperations();
-        baseDir = new File(FilenameUtils.normalize(home + File.separator + "Desktop" + File.separator + "Mail Archive"));
+        baseDir = new File(directory + File.separator + "Mail Archive");
         try {
             url = new URL(URL);
             saveRegex = "http://mail-archives.apache.org/mod_mbox/maven-users/[0-9]{6}.mbox/<.*>$";
@@ -147,11 +146,14 @@ public class Crawler {
 
     public static void main(String args[]) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         String URL = "";
-        if(args.length != 0) // Command Line Arguments
+        String Directory = "";
+        if(args.length == 1)
             URL = args[0];
-        else
-            URL = "http://mail-archives.apache.org/mod_mbox/maven-users/";
-        Crawler crawler = new Crawler(URL);
+        else if(args.length == 2) {
+            URL = args[0];
+            Directory = args[1];
+        }
+        Crawler crawler = new Crawler(URL, Directory);
         crawler.run();
     }
 }

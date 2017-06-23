@@ -1,7 +1,3 @@
-/**
- * Created by anmolvarshney on 23/06/17.
- */
-
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
