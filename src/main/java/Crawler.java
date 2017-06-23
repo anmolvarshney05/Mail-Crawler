@@ -18,13 +18,14 @@ public class Crawler {
     private String addRegex; // Regex for URL's to be added to Queue
     private URL url; // Starting URL
     private File baseDir; // Base Directory for saving Mails
-    private RobotTxt robot; // For Robots.txt
+    private RobotTxt robot; // Robots.txt Parsing
     private MailInformation mailInformation; // Mail Information
     private UrlOperations urlOperations; // URL Functions
     private File file; // Mail(s) and Attachment(s) File(s)
+    private TrackProgress trackProgress; // Tracking and Reloading progress
 
     // Initialising all the Data Structures and Variables
-    public Crawler(String URL, String directory){
+    public Crawler(String URL, String directory) throws IOException {
         if(URL.equals(""))
             URL = "http://mail-archives.apache.org/mod_mbox/maven-users/";
         if(directory.equals("")){
@@ -37,11 +38,19 @@ public class Crawler {
         baseDir = new File(directory + File.separator + "Mail Archive");
         try {
             url = new URL(URL);
+            trackProgress = new TrackProgress(baseDir.toString());
+            if(trackProgress.fileExists(url.toString())){
+                seenURL = trackProgress.reloadSeenURL();
+                newURLs = trackProgress.reloadNewURL();
+            }
+            else{
+                trackProgress.initialise(url);
+                seenURL.put(url, new Integer(1));
+                newURLs.add(url);
+            }
+            robot = new RobotTxt(url);
             saveRegex = "http://mail-archives.apache.org/mod_mbox/maven-users/[0-9]{6}.mbox/<.*>$";
             addRegex = "http://mail-archives.apache.org/mod_mbox/maven-users/[0-9]{6}.mbox/date.*$";
-            seenURL.put(url, new Integer(1));
-            newURLs.add(url);
-            robot = new RobotTxt(url);
         } catch (MalformedURLException e) {
             System.out.println("Invalid starting URL");
             return;
@@ -85,8 +94,10 @@ public class Crawler {
                     }
                     else if (url.toString().matches(addRegex)) {
                         newURLs.add(url);
+                        trackProgress.addNewURL(url.toString());
                     }
                     seenURL.put(url, new Integer(1));
+                    trackProgress.updateSeenURL(url.toString());
                 }
             }
             else
@@ -133,18 +144,19 @@ public class Crawler {
     }
 
     // Main Function to run everything
-    public void run() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public void run() throws IOException, NoSuchAlgorithmException {
         while(true) {
             URL url = newURLs.elementAt(0);
-            newURLs.removeElementAt(0);
             if (robot.robotSafe(url.toString()))
                 processPage(url);
+            newURLs.removeElementAt(0);
+            trackProgress.removeURL();
             if (newURLs.isEmpty())
                 break;
         }
     }
 
-    public static void main(String args[]) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public static void main(String args[]) throws IOException, NoSuchAlgorithmException {
         String URL = "";
         String Directory = "";
         if(args.length == 1)

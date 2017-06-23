@@ -13,6 +13,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
@@ -32,14 +33,16 @@ public class UserInterface extends JFrame{
     private JPanel five;
     private JPanel six;
 
+    // Constructor
     public UserInterface(){
         super("Web Crawler");
         initialise();
-        addListener();
+        addListeners();
         addToLayout();
         pack();
     }
 
+    // Initialise fields
     private void initialise(){
         browse = new JButton("Browse");
         run = new JButton("Run Crawler");
@@ -57,19 +60,21 @@ public class UserInterface extends JFrame{
         directory.setEditable(false);
     }
 
+    // Run Crawler Daemon Thread
     private class backgroundRun extends Thread{
         @Override
         public void run() {
-            Crawler crawler = new Crawler(URL.getText(), directory.getText());
             try {
+                Crawler crawler = new Crawler(URL.getText(), directory.getText());
                 crawler.run();
-            } catch (UnsupportedEncodingException | NoSuchAlgorithmException exception) {
+            } catch (IOException | NoSuchAlgorithmException exception) {
                 return;
             }
         }
     }
 
-    private void addListener(){
+    // Add listener(s) for elements
+    private void addListeners(){
         browse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -101,6 +106,7 @@ public class UserInterface extends JFrame{
         });
     }
 
+    // Add elements to layout
     private void addToLayout(){
         setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
         one.add(selectURL);
