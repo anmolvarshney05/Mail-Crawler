@@ -3,11 +3,12 @@
 * The Crawler works with only http://mail-archives.apache.org/ as the base URL.
 * The website crawled is http://mail-archives.apache.org/mod_mbox/maven-users/.
 * The default website is specified in the program, it can also be specified from the command line.
-* The mail contents will be downloaded into folders according to date, month and author and stored in format as "Author Date" format.
-* The attachment(s) will be downloaded into a sub folder in the same folder as the mails from an author.
+* The mail contents will be downloaded into folders according to date, month and author and stored in format as "Year/Month/Author/Author DateStamp.txt".
+* The attachment(s) will be downloaded into a sub folder in the same folder as the mails from an author in the format as "Year/Month/Author/Author DateStamp Attachments/Attachment (number).txt".
 * The default save directory is the Desktop and is specified in the program, it can also be specified from command line.
 * The command line options can be used in gradle run as well. 
 * A UI is also provided to run the Crawler and to specify the URL and the save Directory.
+* Crawler resumes from last endpoint if run with the same configuration as before.
 
 ## Getting Started
 
@@ -117,11 +118,11 @@ adhere to the following conventions.
 * Version 1.0
   * Extracts Mail URL's from given URL
 * Version 1.1
-  * Extracts Mail contents and stores them in a structured format.
+  * Extracts Mail contents and stores them in a structured format
 * Version 2.0
   * Can be built with Gradle and used on any machine
 * Version 2.1
-  * User Interface for specifying base URL
+  * User Interface for specifying Base URL and Resume operation
 
 ## Authors
 
