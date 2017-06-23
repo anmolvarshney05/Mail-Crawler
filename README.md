@@ -12,7 +12,7 @@
 ## Getting Started
 
 * These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-* Instructions are specified for running the UI but the project can also run from command line.
+* Instructions for gradle are specified for running the UI but the project can also run from command line by changing mainClass file in build.gradle.
 
 ### Prerequisites
 
@@ -56,15 +56,25 @@
   ```
   cd Mail-Crawler/src/main/java
   ```
-* Compile Java file with dependencies
+##### Command Line Method
+###### Compile Java file with dependencies
   ```
   javac -classpath ".;commons-io-2.5/commons-io-2.5.jar" Crawler.java
   ```
-* Execute the generated file
+###### Execute the generated file
   ```
-  java UserInterface.class [Optional Argument 1] [Optional Argument 2]
+  java Crawler.class [Optional Argument 1] [Optional Argument 2]
   Optional Argument 1 - base URL
   Optional Argument 2 - save directory
+  ```
+##### User Interface Method
+###### Compile Java file with dependencies
+  ```
+  javac -classpath ".;commons-io-2.5/commons-io-2.5.jar" UserInterface.java
+  ```
+###### Execute the generated file
+  ```
+  java UserInterface.class
   ```
  
 #### Using gradle
@@ -76,9 +86,7 @@
   ```
 * gradle run
   ```
-  gradle run -Dexec.args="Optional Argument 1 Optional Argument 2"
-  Optional Argument 1 - base URL
-  Optional Argument 2 - save directory
+  gradle run
   ```
 
 ## Built With
