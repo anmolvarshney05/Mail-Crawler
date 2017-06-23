@@ -3,161 +3,88 @@
  */
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileUtils;
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.Vector;
 
 public class Crawler {
-    private final String DISALLOW = "DISALLOW"; // Disallowed Pattern in Robots.txt
-    private final char ESCAPES[] = { '$', '^', '[', ']', '(', ')', '{', '|', '+', '\\', '.', '<', '>' }; // WildCard Escape Characters
-    private Vector<String> blockedIP; // Blocked IP's by Robots.txt
     private Hashtable<URL, Integer> seenURL; // URL's already visited
     private Vector<URL> newURLs; // New URL's
-    private String saveRegex = ""; // Regex for the URL's whose content is desired
+    private String saveRegex; // Regex for the URL's whose content is desired
+    private String addRegex; // Regex for URL's to be added to Queue
+    private String home; // Home Directory
     private URL url; // Starting URL
-    private File baseDir;
+    private File baseDir; // Base Directory for saving Mails
+    private RobotTxt robot; // For Robots.txt
+    private MailInformation mailInformation; // Mail Information
+    private UrlOperations urlOperations; // URL Functions
+    File file; // Mail(s) and Attachment(s) File(s)
 
-    // Initialzing all the Data Structures and Variables
-    private void initialize(String URL){
-        blockedIP = new Vector<String>();
+    // Initialising all the Data Structures and Variables
+    public Crawler(String URL){
         seenURL = new Hashtable<URL, Integer>();
         newURLs = new Vector<URL>();
-        String home = System.getProperty("user.home");
-        baseDir = new File(FilenameUtils.normalize(home + File.separator + "Desktop" + File.separator + "Mails"));
-        baseDir.mkdir();
-        //seenURLHash = new Hashtable<String, Integer>();
+        home = System.getProperty("user.home");
+        mailInformation = new MailInformation();
+        urlOperations = new UrlOperations();
+        baseDir = new File(FilenameUtils.normalize(home + File.separator + "Desktop" + File.separator + "Mail Archive"));
         try {
             url = new URL(URL);
-            saveRegex = url.toString() + "[0-9]{6}.mbox/<.*>$";
+            saveRegex = "http://mail-archives.apache.org/mod_mbox/maven-users/[0-9]{6}.mbox/<.*>$";
+            addRegex = "http://mail-archives.apache.org/mod_mbox/maven-users/[0-9]{6}.mbox/date.*$";
             seenURL.put(url, new Integer(1));
             newURLs.add(url);
+            robot = new RobotTxt(url);
         } catch (MalformedURLException e) {
             System.out.println("Invalid starting URL");
             return;
         }
     }
 
-    // Convert WildCards to Regex Expressions
-    private String wildcardToReg(String pattern) {
-        String result = "^";
-        for (int i = 0; i < pattern.length(); i++) {
-            char ch = pattern.charAt(i);
-            boolean escaped = false;
-            for (int j = 0; j < ESCAPES.length; j++) {
-                if (ch == ESCAPES[j]) {
-                    result += "\\" + ch;
-                    escaped = true;
-                    break;
-                }
-            }
-            if (!escaped) {
-                if (ch == '*') {
-                    result += ".*";
-                } else if (ch == '?') {
-                    result += ".";
-                } else {
-                    result += ch;
-                }
-            }
-        }
-        result += "$";
-        return result;
+    // Save Mail Content
+    private void saveMailFile(String mail, int year, int month, String author, String dateStamp) throws IOException {
+        file = new File(baseDir.toString() + File.separator + String.valueOf(year) + File.separator + String.valueOf(month) + File.separator + author + File.separator + author + " " + dateStamp + ".txt");
+        FileUtils.writeStringToFile(file, mail, "UTF-8", true);
+        System.out.println("Saved Mail in " + file.toString());
     }
 
-    // Get Robots.txt of a URL
-    private String getRobot() {
-        String baseURL = url.getProtocol() + "://" + url.getHost();
-        try (InputStream in = new URL(baseURL + "/robots.txt").openStream()) {
-            return IOUtils.toString(in, "UTF-8");
-        } catch (Exception e) {
-            return "No Robots.txt File";
-        }
-    }
-
-    // Store all the Disallowed URL's by Robots.txt
-    private void fillRobots(){
-        String ret = getRobot();
-        if(ret.equals("No Robots.txt File")){
-            System.out.println("This site doesn't have a Robots.txt File");
-        }
-        else{
-            String[] str = ret.split("\n");
-            for(int i = 0; i < str.length; i++){
-                if(str[i].toUpperCase().contains(DISALLOW)) {
-                    blockedIP.add(wildcardToReg(url + str[i].substring(str[i].indexOf(":") + 2)));
-                }
-            }
-        }
-    }
-
-    // Check to see if URL is not disallowed in Robots.txt
-    private boolean robotSafe(String link){
-        boolean ret = true;
-        for(String IP: blockedIP){
-            if(link.matches(IP)){
-                ret = false;
-                break;
-            }
-        }
-        return ret;
-    }
-
-    // Get URL Page Contents
-    private String getPage(URL url){
-        try (InputStream in = new URL(url.toString()).openStream()) {
-            return IOUtils.toString(in, "UTF-8");
-        } catch (Exception e) {
-            System.out.println("Couldn't open the URL");
-            return "";
+    // Save Attachment(s)
+    private void saveAttachments(Vector<URL> attachmentsURL, int year, int month, String author, String dateStamp) throws IOException {
+        for(int i = 0; i < attachmentsURL.size(); i++) {
+            file = new File(baseDir.toString() + File.separator + String.valueOf(year) + File.separator + String.valueOf(month) + File.separator + author + File.separator + author + " " + dateStamp + " Attachments" + File.separator + "Attachment " + String.valueOf(i + 1) + ".txt");
+            String attachment = urlOperations.getPage(attachmentsURL.elementAt(i));
+            FileUtils.writeStringToFile(file, attachment, "UTF-8", true);
+            System.out.println("Saved Attachment " + String.valueOf(i + 1) + " in " + file.toString());
         }
     }
 
     // Add New URL to the Queue
-    // Check to see if the URL is already Visited
-    // Display the desired URL's
-    // Option to avoid visiting the pages with same hash
+    // Save Mail(s) and Attachment(s)
     private void addNewURL(URL oldURL, String newURL) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         try {
-            URI uri = oldURL.toURI();
-            URI uriRes = uri.resolve(newURL.replaceAll("\"", ""));
-            URL url = uriRes.toURL();
-            if(robotSafe(url.toString())){
+            URL url = urlOperations.resolveURL(oldURL, newURL);
+            if(robot.robotSafe(url.toString())){
                 if(!(seenURL.containsKey(url))) {
                     if(URLDecoder.decode(url.toString(), "UTF-8").matches(saveRegex)){
-                        String pageContent = getPage(url);
-                        int messageLink = pageContent.indexOf("<a rel=\"nofollow\" href=\"");
-                        int start = messageLink + "<a rel=\"nofollow\" href=\"".length();
-                        int end = pageContent.indexOf("\"", start);
-                        String messageURL = pageContent.substring(start, end);
-                        URI uriTemp = url.toURI();
-                        URI uriResTemp = uriTemp.resolve(messageURL);
-                        URL urlTemp = uriResTemp.toURL();
-                        int year = Integer.parseInt(url.toString().substring(url.toString().indexOf(".mbox") - 6, url.toString().indexOf(".mbox") - 2));
-                        int month = Integer.parseInt(url.toString().substring(url.toString().indexOf(".mbox") - 2, url.toString().indexOf(".mbox")));
-                        String fromMarker = "<td class=\"left\">From</td>\n    <td class=\"right\">";
-                        String author = pageContent.substring(pageContent.indexOf(fromMarker) + fromMarker.length(), pageContent.indexOf("&lt", pageContent.indexOf(fromMarker) + fromMarker.length()) - 1);
-                        author = author.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", "\"").replaceAll("&apos;", "'");
-                        if(!(Character.isLetter(author.charAt(0))))
-                            author = author.substring(1, author.length() - 1);
-                        String dateMarker = "<td class=\"left\">Date</td>\n    <td class=\"right\">";
-                        String dateStamp = pageContent.substring(pageContent.indexOf(dateMarker) + dateMarker.length(), pageContent.indexOf("</td>", pageContent.indexOf(dateMarker) + dateMarker.length()));
-                        dateStamp = dateStamp.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", "\"").replaceAll("&apos;", "'");
-                        if(!(Character.isLetter(dateStamp.charAt(0))))
-                            dateStamp = dateStamp.substring(1, dateStamp.length() - 1);
-                        dateStamp = dateStamp.substring(dateStamp.indexOf("GMT") - 9, dateStamp.indexOf("GMT") + 3);
-                        dateStamp.replaceAll(":", "-");
-                        pageContent = getPage(urlTemp);
-                        File file = new File(baseDir.toString() + File.separator + String.valueOf(year) + File.separator + String.valueOf(month) + File.separator + author + File.separator + author + " " + dateStamp + ".txt");
-                        FileUtils.writeStringToFile(file, pageContent, "UTF-8", true);
-                        System.out.println("Saved Mail in " + file.toString());
+                        int year = mailInformation.getYear(url);
+                        int month = mailInformation.getMonth(url);
+                        String pageContent = urlOperations.getPage(url);
+                        String author = mailInformation.getAuthor(pageContent);
+                        String dateStamp = mailInformation.getDateStamp(pageContent);
+                        String mail = mailInformation.getMessage(pageContent);
+                        Vector<URL> attachmentsURL = mailInformation.getAttachmentsURL(url, pageContent);
+                        saveMailFile(mail, year, month, author, dateStamp);
+                        saveAttachments(attachmentsURL, year, month, author, dateStamp);
                     }
-                    else if (url.toString().matches(this.url.toString() + "[0-9]{6}.mbox/date.*$")) {
+                    else if (url.toString().matches(addRegex)) {
                         newURLs.add(url);
                     }
                     seenURL.put(url, new Integer(1));
@@ -172,7 +99,7 @@ public class Crawler {
 
     // Extract all URL's from the page
     public void processPage(URL url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        String page = getPage(url);
+        String page = urlOperations.getPage(url);
         String lcPage = page.toLowerCase();
         if(lcPage != "") {
             int index = 0;
@@ -207,13 +134,11 @@ public class Crawler {
     }
 
     // Main Function to run everything
-    public void run(String URL) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        initialize(URL);
-        fillRobots();
+    public void run() throws UnsupportedEncodingException, NoSuchAlgorithmException {
         while(true) {
             URL url = newURLs.elementAt(0);
             newURLs.removeElementAt(0);
-            if (robotSafe(url.toString()))
+            if (robot.robotSafe(url.toString()))
                 processPage(url);
             if (newURLs.isEmpty())
                 break;
@@ -221,11 +146,12 @@ public class Crawler {
     }
 
     public static void main(String args[]) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        Crawler crawler = new Crawler();
-        if(args.length != 0) {
-            crawler.run(args[0]);
-        }
+        String URL = "";
+        if(args.length != 0) // Command Line Arguments
+            URL = args[0];
         else
-            crawler.run("http://mail-archives.apache.org/mod_mbox/maven-users/");
+            URL = "http://mail-archives.apache.org/mod_mbox/maven-users/";
+        Crawler crawler = new Crawler(URL);
+        crawler.run();
     }
 }
