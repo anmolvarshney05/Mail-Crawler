@@ -1,13 +1,18 @@
 # Mail-Crawler
-A simple Mail Crawler to extract the mails from a Mailing List and downloads them into an output folder.
-The website crawled is http://mail-archives.apache.org/mod_mbox/maven-users/.
-The website is specified in the program, it can also be specified from the command line.
-The Crawler works with only http://mail-archives.apache.org/ as the base URL.
-The mail contents will be downloaded into folders according to date and month and stored in format as "Author Date" format.
+* A simple Mail Crawler to extract the mails and their attachment(s) from a Mailing List and downloads them into an output folder.
+* The Crawler works with only http://mail-archives.apache.org/ as the base URL.
+* The website crawled is http://mail-archives.apache.org/mod_mbox/maven-users/.
+* The default website is specified in the program, it can also be specified from the command line.
+* The mail contents will be downloaded into folders according to date, month and author and stored in format as "Author Date" format.
+* The attachment(s) will be downloaded into a sub folder in the same folder as the mails from an author.
+* The default save directory is the Desktop and is specified in the program, it can also be specified from command line.
+* The command line options can be used in gradle run as well. 
+* A UI is also provided to run the Crawler and to specify the URL and the save Directory.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
+* These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+* Instructions are specified for running the UI but the project can also run from command line.
 
 ### Prerequisites
 
@@ -49,7 +54,7 @@ These instructions will get you a copy of the project up and running on your loc
 * Open Terminal
 * Move to the directory where repository was cloned
   ```
-  cd Mail-Crawler/src
+  cd Mail-Crawler/src/main/java
   ```
 * Compile Java file with dependencies
   ```
@@ -57,7 +62,9 @@ These instructions will get you a copy of the project up and running on your loc
   ```
 * Execute the generated file
   ```
-  java Crawler.class
+  java UserInterface.class [Optional Argument 1] [Optional Argument 2]
+  Optional Argument 1 - base URL
+  Optional Argument 2 - save directory
   ```
  
 #### Using gradle
@@ -69,11 +76,9 @@ These instructions will get you a copy of the project up and running on your loc
   ```
 * gradle run
   ```
-  gradle run 
-  ```
-* gradle run with specific base URL
-  ```
-  gradle run -Dexec.args=baseURL
+  gradle run -Dexec.args="Optional Argument 1 Optional Argument 2"
+  Optional Argument 1 - base URL
+  Optional Argument 2 - save directory
   ```
 
 ## Built With
