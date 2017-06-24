@@ -40,8 +40,16 @@ public class TrackProgress {
     public void initialise(URL url) throws IOException {
         FileUtils.writeStringToFile(this.url, url.toString(), "UTF-8");
         FileUtils.writeStringToFile(index, String.valueOf(0), "UTF-8");
-        FileUtils.writeStringToFile(newURL, url.toString(), "UTF-8", true);
-        FileUtils.writeStringToFile(seenURL, url.toString(), "UTF-8", true);
+        FileUtils.writeStringToFile(newURL, url.toString(), "UTF-8");
+        FileUtils.writeStringToFile(seenURL, url.toString(), "UTF-8");
+    }
+
+    // Delete Progress
+    public void deleteProgress(){
+        FileUtils.deleteQuietly(url);
+        FileUtils.deleteQuietly(index);
+        FileUtils.deleteQuietly(newURL);
+        FileUtils.deleteQuietly(seenURL);
     }
 
     // Add to Seen URL's
