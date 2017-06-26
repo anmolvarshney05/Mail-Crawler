@@ -8,13 +8,9 @@ import java.net.URL;
 public class UrlOperations {
 
     // Get URL Page Contents
-    public String getPage(URL url){
-        try (InputStream in = new URL(url.toString()).openStream()) {
-            return IOUtils.toString(in, "UTF-8");
-        } catch (Exception e) {
-            System.out.println("Couldn't open the URL");
-            return "";
-        }
+    public String getPage(URL url) throws Exception{
+        InputStream in = new URL(url.toString()).openStream();
+        return IOUtils.toString(in, "UTF-8");
     }
 
     // Resolve base URL and relative URL

@@ -1,3 +1,4 @@
+import jdk.nashorn.internal.scripts.JO;
 import org.apache.commons.io.FilenameUtils;
 import javax.swing.*;
 import java.awt.FlowLayout;
@@ -9,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.MalformedURLException;
-import java.security.NoSuchAlgorithmException;
 
 public class UserInterface extends JFrame{
     private JButton browse;
@@ -67,8 +67,9 @@ public class UserInterface extends JFrame{
                 }
                 Crawler crawler = new Crawler(URL.getText(), directory.getText());
                 crawler.run();
-            } catch (IOException | NoSuchAlgorithmException exception) {
-                return;
+                JOptionPane.showMessageDialog(null, "Crawling Complete", "Complete", JOptionPane.PLAIN_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Couldn't crawl the web page", "Error", JOptionPane.WARNING_MESSAGE);
             }
         }
     }
@@ -136,6 +137,7 @@ public class UserInterface extends JFrame{
                         Object[] options = getButtons();
                         option = JOptionPane.showOptionDialog(null, "Click Continue to Resume", "Archive Found", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,null, options, options[1]);
                     }
+                    JOptionPane.showMessageDialog(null, "Process started", "Crawling started", JOptionPane.PLAIN_MESSAGE);
                     backgroundRun thread = new backgroundRun(option);
                     thread.setDaemon(true);
                     thread.start();

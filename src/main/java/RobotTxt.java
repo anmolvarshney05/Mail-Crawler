@@ -1,19 +1,22 @@
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Vector;
 
 public class RobotTxt {
     private final String DISALLOW; // Disallowed Pattern in Robots.txt
     private final char[] ESCAPES; // WildCard Escape Characters
+    private final String userAgent; // Crawler User Agent
     private Vector<String> blockedIP; // Blocked IP's by Robots.txt
     private URL url;
 
     // Constructor
     public RobotTxt(URL url){
         this.url = url;
-        DISALLOW = "DISALLOW";
+        DISALLOW = "Disallow";
         ESCAPES = new char[]{ '$', '^', '[', ']', '(', ')', '{', '|', '+', '\\', '.', '<', '>' };
+        userAgent = "*";
         blockedIP = new Vector<String>();
         fillRobots();
     }
@@ -58,15 +61,15 @@ public class RobotTxt {
     // Store all the Disallowed URL's by Robots.txt
     private void fillRobots(){
         String ret = getRobot();
-        if(ret.equals("No Robots.txt File")){
-            System.out.println("This site doesn't have a Robots.txt File");
-        }
-        else{
+        if(!ret.equals("No Robots.txt File")){
             String[] str = ret.split("\n");
+            String mostRecentUserAgent = "";
             for(int i = 0; i < str.length; i++){
-                if(str[i].toUpperCase().contains(DISALLOW)) {
-                    blockedIP.add(wildcardToReg(url + str[i].substring(str[i].indexOf(":") + 2)));
-                }
+                if(str[i].contains("User-agent: "))
+                    mostRecentUserAgent = str[i].substring(str[i].indexOf(":") + 2);
+                else if (str[i].contains(DISALLOW))
+                    if(mostRecentUserAgent.equals(userAgent))
+                        blockedIP.add(wildcardToReg(url + str[i].substring(str[i].indexOf(":") + 2)));
             }
         }
     }
